@@ -1,0 +1,13 @@
+[configuration]
+
+entry_symbol = "gdbq_library_init"
+compatibility_minimum = "4.1"
+
+[libraries]
+
+macos.debug = "bin/macos/libgdbq.macos.template_debug.universal.dylib"
+macos.release = "bin//macos/libgdbq.macos.template_release.universal.dylib"
+windows.debug.x86_64 = "bin/windows/libgdbq.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "bin/windows/libgdbq.windows.template_release.x86_64.dll"
+linux.debug.x86_64 = "bin/linux/libgdbq.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "bin/linux/libgdbq.linux.template_release.x86_64.so"
