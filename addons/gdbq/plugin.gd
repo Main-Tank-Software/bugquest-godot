@@ -1,6 +1,7 @@
 @tool
 extends EditorPlugin
 
+const LOG_LEVEL_SETTING = "bugquest/log_level"
 const API_KEY_SETTING = "bugquest/api_key"
 const SECRET_KEY_SETTING = "bugquest/secret_key"
 const BASE_URL = "https://ingest.bugquestggapi.com"
@@ -19,6 +20,14 @@ var http_request: HTTPRequest
 var setup_btn: Button = null  # Direct reference to the setup button
 
 func _enter_tree():
+	
+	var log_level = ProjectSettings.get_setting(LOG_LEVEL_SETTING, -1)
+	
+	if log_level < 0:
+		log_level = 2
+		ProjectSettings.set_setting(LOG_LEVEL_SETTING,log_level)
+		
+	
 	add_tool_menu_item("BugQuest Setup", Callable(self, "_show_plugin_main_dialog"))
 	check_for_update()
 
