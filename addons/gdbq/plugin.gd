@@ -1,6 +1,7 @@
 @tool
 extends EditorPlugin
 
+const LOGGING_ENABLED_SETTING = "bugquest/logging_enabled"
 const LOG_LEVEL_SETTING = "bugquest/log_level"
 const API_KEY_SETTING = "bugquest/api_key"
 const SECRET_KEY_SETTING = "bugquest/secret_key"
@@ -20,6 +21,13 @@ var http_request: HTTPRequest
 var setup_btn: Button = null  # Direct reference to the setup button
 
 func _enter_tree():
+	
+	if !ProjectSettings.has_setting(LOGGING_ENABLED_SETTING):
+		ProjectSettings.set_setting(LOGGING_ENABLED_SETTING,false)
+	
+	ProjectSettings.set_as_internal(LOG_LEVEL_SETTING,true)
+	ProjectSettings.set_as_internal(LOGGING_ENABLED_SETTING,true)
+	ProjectSettings.set_as_internal(SECRET_KEY_SETTING,true)
 	
 	var log_level = ProjectSettings.get_setting(LOG_LEVEL_SETTING, -1)
 	
@@ -440,11 +448,18 @@ func check_for_update():
 		var json := JSON.parse_string(body.get_string_from_utf8())
 		if json is Dictionary and json.has("tag_name"):
 			var latest_version = json["tag_name"].lstrip("v")  # Strip the leading "v"
-			if latest_version != current_version:
+			if is_version_newer(current_version,latest_version):
 				print("✅ New BugQuest version available! Local:", current_version, "| Latest:", latest_version)
-				show_update_notification(latest_version)
+				show_update_notification(latest_version)				
 			else:
 				print("✔ Plugin is up to date.")
+			
+			if is_version_newer(latest_version, current_version):
+				print("Dev build detected")
+				ProjectSettings.set_as_internal(LOG_LEVEL_SETTING,false)
+				ProjectSettings.set_as_internal(LOGGING_ENABLED_SETTING,false)
+				ProjectSettings.set_as_internal(SECRET_KEY_SETTING,false)
+				
 		else:
 			push_error("Invalid GitHub response or missing 'tag_name'")
 	)
@@ -452,6 +467,23 @@ func check_for_update():
 	var err = http.request(GITHUB_API_URL)
 	if err != OK:
 		push_error("Failed to make HTTP request")
+
+func is_version_newer(current_version: String, latest_version: String) -> bool:
+	var current_parts = current_version.split(".")
+	var latest_parts = latest_version.split(".")
+
+	var max_len = max(current_parts.size(), latest_parts.size())
+
+	for i in max_len:
+		var current_part = int(current_parts[i]) if i < current_parts.size() else 0
+		var latest_part = int(latest_parts[i]) if i < latest_parts.size() else 0
+
+		if latest_part > current_part:
+			return true
+		elif latest_part < current_part:
+			return false
+
+	return false  # Versions are equal
 
 func get_local_plugin_version() -> String:
 	var config = ConfigFile.new()
