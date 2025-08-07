@@ -25,9 +25,7 @@ func _enter_tree():
 	if !ProjectSettings.has_setting(LOGGING_ENABLED_SETTING):
 		ProjectSettings.set_setting(LOGGING_ENABLED_SETTING,false)
 	
-	ProjectSettings.set_as_internal(LOG_LEVEL_SETTING,true)
 	ProjectSettings.set_as_internal(LOGGING_ENABLED_SETTING,true)
-	ProjectSettings.set_as_internal(SECRET_KEY_SETTING,true)
 	
 	var log_level = ProjectSettings.get_setting(LOG_LEVEL_SETTING, -1)
 	
@@ -35,6 +33,11 @@ func _enter_tree():
 		log_level = 2
 		ProjectSettings.set_setting(LOG_LEVEL_SETTING,log_level)
 		
+	if ProjectSettings.has_setting(LOG_LEVEL_SETTING):
+		ProjectSettings.set_as_internal(LOG_LEVEL_SETTING,true)
+	
+	if ProjectSettings.has_setting(SECRET_KEY_SETTING):
+		ProjectSettings.set_as_internal(SECRET_KEY_SETTING,true)
 	
 	add_tool_menu_item("BugQuest Setup", Callable(self, "_show_plugin_main_dialog"))
 	check_for_update()
@@ -252,6 +255,7 @@ func _on_request_completed(result: int, response_code: int, headers: PackedStrin
 	# Store the API key and secret key in the project settings
 	ProjectSettings.set_setting(API_KEY_SETTING, api_key)
 	ProjectSettings.set_setting(SECRET_KEY_SETTING, secret_key)
+	ProjectSettings.set_as_internal(SECRET_KEY_SETTING,true)
 	ProjectSettings.save()
 	
 	# Hide the setup dialog
