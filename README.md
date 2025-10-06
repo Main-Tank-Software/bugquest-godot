@@ -13,3 +13,7 @@ This is the BugQuest SDK for Godot. BugQuest is a lightweight, comprehensive clo
 For more details please see:
 
 [BugQuest Documentation](https://www.bugquest.gg/docs/)
+
+Build Outputs
+- Godot 4.1+: `godot41/addons/gdbq`
+- Godot 4.5+ (improved error tracking): `godot45/addons/gdbq_godot45`
