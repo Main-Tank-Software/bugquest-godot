@@ -13,7 +13,12 @@ const PRIVACY_URL = "https://www.bugquest.gg/legal/privacy"
 const CONSOLE_URL = "https://console.bugquest.gg/register"
 
 const GITHUB_API_URL := "https://api.github.com/repos/Main-Tank-Software/bugquest-godot/releases/latest"
-const PLUGIN_CONFIG_PATH := "res://addons/gdbq/plugin.cfg"
+func _get_plugin_config_path() -> String:
+	# Avoid inference issues: explicitly type intermediate values
+	var script_res = get_script()
+	var res_path: String = script_res.resource_path
+	var dir: String = res_path.get_base_dir()
+	return dir.path_join("plugin.cfg")
 
 var setup_dialog: AcceptDialog
 var completion_dialog: AcceptDialog
@@ -491,7 +496,7 @@ func is_version_newer(current_version: String, latest_version: String) -> bool:
 
 func get_local_plugin_version() -> String:
 	var config = ConfigFile.new()
-	var err = config.load(PLUGIN_CONFIG_PATH)
+	var err = config.load(_get_plugin_config_path())
 	if err != OK:
 		return ""
 	return config.get_value("plugin", "version", "")
