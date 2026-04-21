@@ -523,12 +523,12 @@ namespace BugQuest
 
 		private static void DebugLog(string message)
 		{
-			GD.Print(LogPrefix + "[T" + System.Environment.CurrentManagedThreadId + "] " + message);
+			//GD.Print(LogPrefix + "[T" + System.Environment.CurrentManagedThreadId + "] " + message);
 		}
 
 		private static void DebugError(string message)
 		{
-			GD.PrintErr(LogPrefix + "[T" + System.Environment.CurrentManagedThreadId + "] " + message);
+			//GD.PrintErr(LogPrefix + "[T" + System.Environment.CurrentManagedThreadId + "] " + message);
 		}
 	}
 }
