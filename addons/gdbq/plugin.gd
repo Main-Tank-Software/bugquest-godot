@@ -11,6 +11,8 @@ const SETUP_URL = BASE_URL + "/" + EDITOR_INIT_ENDPOINT
 const EULA_URL = "https://www.bugquest.gg/legal/eula"
 const PRIVACY_URL = "https://www.bugquest.gg/legal/privacy"
 const CONSOLE_URL = "https://console.bugquest.gg/register"
+const COMPLETION_DIALOG_BASE_SIZE = Vector2(760, 420)
+const COMPLETION_DIALOG_MAX_SIZE = Vector2(980, 560)
 
 const GITHUB_API_URL := "https://api.github.com/repos/Main-Tank-Software/bugquest-godot/releases/latest"
 func _get_plugin_config_path() -> String:
@@ -275,10 +277,9 @@ func _show_done_dialog(api_key: String, secret_key: String):
 	if not completion_dialog:
 		completion_dialog = AcceptDialog.new()
 		completion_dialog.title = "BugQuest Setup Complete"
-		completion_dialog.min_size = Vector2(600, 300)  # Increased height for OK button
-		completion_dialog.max_size = Vector2(600, 300)  # Fixed maximum size to prevent stretching
-		completion_dialog.size = Vector2(600, 300)      # Force initial size
+		completion_dialog.min_size = COMPLETION_DIALOG_BASE_SIZE
 		completion_dialog.ok_button_text = "Close"      # Rename OK button
+		completion_dialog.unresizable = true
 		
 		# Connect close button press signal
 		completion_dialog.connect("confirmed", Callable(self, "_on_completion_dialog_confirmed"))
@@ -286,9 +287,10 @@ func _show_done_dialog(api_key: String, secret_key: String):
 		# In Godot 4, add dialogs to the editor main screen
 		get_editor_interface().get_base_control().add_child(completion_dialog)
 		
-		# Use PanelContainer to provide a fixed-size content area
+		# Use PanelContainer to provide a content area that can grow with editor DPI/font scaling.
 		var panel = PanelContainer.new()
-		panel.size_flags_vertical = Control.SIZE_SHRINK_END
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		completion_dialog.add_child(panel)
 		
 		# Use MarginContainer inside panel for padding
@@ -296,19 +298,21 @@ func _show_done_dialog(api_key: String, secret_key: String):
 		margin.add_theme_constant_override("left", 20)
 		margin.add_theme_constant_override("right", 20)
 		margin.add_theme_constant_override("top", 20)
-		margin.add_theme_constant_override("bottom", 70)  # Extra bottom padding for OK button
+		margin.add_theme_constant_override("bottom", 20)
 		panel.add_child(margin)
 		
 		# Main content container
 		var vb = VBoxContainer.new()
 		vb.name = "BQ_CompletionContainer"
 		vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		vb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		vb.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		margin.add_child(vb)
 		
 		# Heading
 		var lbl = Label.new()
 		lbl.text = "Setup complete! Click the link below to open your BugQuest console:"
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		vb.add_child(lbl)
 		
 		# Spacer
@@ -320,7 +324,7 @@ func _show_done_dialog(api_key: String, secret_key: String):
 		var url_container = PanelContainer.new()
 		url_container.name = "URLContainer"
 		url_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		url_container.custom_minimum_size.y = 40
+		url_container.custom_minimum_size.y = 70
 		
 		# Add padding inside URL container
 		var url_margin = MarginContainer.new()
@@ -337,8 +341,11 @@ func _show_done_dialog(api_key: String, secret_key: String):
 		link.meta_underlined = true
 		link.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		link.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		link.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		link.scroll_active = false
+		link.selection_enabled = true
 		link.meta_clicked.connect(func(meta): OS.shell_open(str(meta)))
-		link.fit_content = true
+		link.fit_content = false
 		url_margin.add_child(link)
 		vb.add_child(url_container)
 		
@@ -382,8 +389,20 @@ func _show_done_dialog(api_key: String, secret_key: String):
 	if link_node:
 		link_node.text = "[url=%s]%s[/url]" % [url, url]
 	
-	# Show dialog with explicit size
-	completion_dialog.popup_centered(Vector2(600, 300))
+	# Size by editor UI scale, then clamp to available screen space.
+	var editor_scale := max(1.0, get_editor_interface().get_editor_scale())
+	var popup_size = COMPLETION_DIALOG_BASE_SIZE * editor_scale
+	# Hard-cap size so this dialog never expands to near-full-screen height.
+	popup_size.x = clampf(popup_size.x, COMPLETION_DIALOG_BASE_SIZE.x, COMPLETION_DIALOG_MAX_SIZE.x)
+	popup_size.y = clampf(popup_size.y, COMPLETION_DIALOG_BASE_SIZE.y, COMPLETION_DIALOG_MAX_SIZE.y)
+	var editor_window_size = get_editor_interface().get_base_control().size
+	if editor_window_size.x > 0.0 and editor_window_size.y > 0.0:
+		popup_size.x = min(popup_size.x, editor_window_size.x * 0.90)
+		popup_size.y = min(popup_size.y, editor_window_size.y * 0.90)
+	completion_dialog.min_size = popup_size
+	completion_dialog.max_size = popup_size
+	completion_dialog.size = popup_size
+	completion_dialog.popup_centered(popup_size)
 	
 	# Debug - output the dialog hierarchy to help see what might be wrong
 	print("Completion dialog hierarchy:")
