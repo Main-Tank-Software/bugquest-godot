@@ -11,3 +11,12 @@ windows.debug.x86_64 = "bin/windows/libgdbq.windows.template_release.x86_64.dll"
 windows.release.x86_64 = "bin/windows/libgdbq.windows.template_release.x86_64.dll"
 linux.debug.x86_64 = "bin/linux/libgdbq.linux.template_release.x86_64.so"
 linux.release.x86_64 = "bin/linux/libgdbq.linux.template_release.x86_64.so"
+
+[dependencies]
+windows.x86_64 = {
+"bin/windows/bugquest_video.dll": "",
+"bin/windows/avcodec-61.dll": "",
+"bin/windows/avformat-61.dll": "",
+"bin/windows/avutil-59.dll": "",
+"bin/windows/swresample-5.dll": ""
+}
