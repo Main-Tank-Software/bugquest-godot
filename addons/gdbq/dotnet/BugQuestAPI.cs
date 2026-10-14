@@ -6,19 +6,57 @@ namespace BugQuest
     {
         private const string BugQuestNodePath = "/root/BugQuest";
 
-        public static void Disable()
+        private static Node GetActiveNode()
         {
             SceneTree sceneTree = Engine.GetMainLoop() as SceneTree;
-            if (sceneTree == null || sceneTree.Root == null)
-            {
-                return;
-            }
+            Node bq = sceneTree?.Root?.GetNodeOrNull<Node>(BugQuestNodePath);
+            return bq != null && !(bool)bq.Call("is_disabled") ? bq : null;
+        }
 
-            Node bq = sceneTree.Root.GetNodeOrNull<Node>(BugQuestNodePath);
-            if (bq != null && !(bool)bq.Call("is_disabled"))
-            {
-                bq.Call("disable");
-            }
+        /// <summary>Disables BugQuest collection and upload for the current app session.</summary>
+        public static void Disable()
+        {
+            GetActiveNode()?.Call("disable");
+        }
+
+        /// <summary>Starts a replay, subject to video availability and the server duration limit.</summary>
+        public static bool StartReplay(string replayLabel, bool discardReplayOnMaxDurationTimeout = false, int maxReplayDurationMinutes = int.MaxValue)
+        {
+            Node bq = GetActiveNode();
+            return bq != null && (bool)bq.Call("start_replay", replayLabel ?? "", discardReplayOnMaxDurationTimeout, maxReplayDurationMinutes);
+        }
+
+        /// <summary>Requests replay completion, optionally discarding, relabeling, or trimming it.</summary>
+        public static bool StopReplay(bool discardReplay = false, string replaceLabel = null, int onlyKeepLastMinutes = int.MaxValue)
+        {
+            Node bq = GetActiveNode();
+            Variant label = replaceLabel == null ? default(Variant) : Variant.From(replaceLabel);
+            return bq != null && (bool)bq.Call("stop_replay", discardReplay, label, onlyKeepLastMinutes);
+        }
+
+        /// <summary>Returns whether a replay is active, including pending finalization.</summary>
+        public static bool IsReplayRecording()
+        {
+            Node bq = GetActiveNode();
+            return bq != null && (bool)bq.Call("is_replay_recording");
+        }
+
+        /// <summary>Allows automatic error clips when enabled by the server configuration.</summary>
+        public static void EnableErrorClips()
+        {
+            GetActiveNode()?.Call("enable_error_clips");
+        }
+
+        /// <summary>Suppresses error clips without stopping replays for this app session.</summary>
+        public static void DisableErrorClips()
+        {
+            GetActiveNode()?.Call("disable_error_clips");
+        }
+
+        /// <summary>Stops and disables all video features for the rest of this app session.</summary>
+        public static void DisableAllVideoFeatures()
+        {
+            GetActiveNode()?.Call("disable_all_video_features");
         }
 
         // Sends a user-submitted report (player feedback / bug report). The text is stored in the
@@ -26,19 +64,8 @@ namespace BugQuest
         // The game is responsible for the UI that collects the text.
         public static bool SendUserReport(string text, string[] attachmentPaths = null)
         {
-            SceneTree sceneTree = Engine.GetMainLoop() as SceneTree;
-            if (sceneTree == null || sceneTree.Root == null)
-            {
-                return false;
-            }
-
-            Node bq = sceneTree.Root.GetNodeOrNull<Node>(BugQuestNodePath);
-            if (bq == null)
-            {
-                return false;
-            }
-
-            return (bool)bq.Call("send_user_report", text, attachmentPaths ?? new string[0]);
+            Node bq = GetActiveNode();
+            return bq != null && (bool)bq.Call("send_user_report", text, attachmentPaths ?? new string[0]);
         }
     }
 }
